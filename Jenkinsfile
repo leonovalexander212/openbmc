@@ -5,7 +5,7 @@ pipeline {
         stage('Checkout') {
             steps {
                 git branch: 'main', 
-                    url: 'https://github.com/AlexKunc/Aquarius.git'
+                    url: 'https://github.com/leonovalexander212/openbmc.git'
             }
         }
         

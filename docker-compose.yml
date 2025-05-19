@@ -1,7 +1,7 @@
 version: '3.8'
 services:
   jenkins:
-    build: .
+    network_mode: host  # Добавьте эту строку
     ports:
       - "8080:8080"
       - "2443:2443"  # Порт для OpenBMC

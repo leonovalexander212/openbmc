@@ -19,10 +19,10 @@ pipeline {
             steps {
                 script {
                     sh '''
-                        chmod +x qemu_start.sh
+                        dos2unix qemu_start.sh || true  # Исправляем формат
+                        chmod 755 qemu_start.sh
                         ./qemu_start.sh
                     '''
-                    sleep(time: 30, unit: 'SECONDS')
                 }
             }
         }

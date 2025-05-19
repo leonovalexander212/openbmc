@@ -54,7 +54,6 @@ pipeline {
             }
         }
 
-
         stage('Check OpenBMC Availability') {
             steps {
                 script {
@@ -70,7 +69,7 @@ pipeline {
                 }
             }
         }
-        // Остальные этапы остаются без изменений
+
         stage('Auth Tests') {
             steps {
                 sh '/opt/venv/bin/pytest tests/auth/ --junitxml=auth-results.xml'
@@ -78,6 +77,7 @@ pipeline {
             post {
                 always {
                     junit 'auth-results.xml'
+                    archiveArtifacts artifacts: 'auth-results.xml'
                 }
             }
         }
@@ -89,6 +89,7 @@ pipeline {
             post {
                 always {
                     junit 'webui-results.xml'
+                    archiveArtifacts artifacts: 'webui-results.xml'
                 }
             }
         }
@@ -108,6 +109,7 @@ pipeline {
     post {
         always {
             sh 'pkill -f qemu-system-arm || true'
+            sh 'pkill -f Xvfb || true'
         }
     }
 }

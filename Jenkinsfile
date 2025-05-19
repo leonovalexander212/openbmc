@@ -2,31 +2,74 @@ pipeline {
     agent any
 
     stages {
-        // Этап 0: Проверка содержимого репозитория
-        stage('Debug: Check Files') {
+        stage('Checkout') {
             steps {
-                sh '''
-                    echo "Current directory: $(pwd)"
-                    ls -la
-                    echo "Checking qemu_start.sh..."
-                    ls -l qemu_start.sh || true
-                '''
+                git branch: 'main', 
+                    url: 'https://github.com/AlexKunc/Aquarius.git'
             }
         }
-
-        // Этап 1: Запуск QEMU
+        
         stage('Start QEMU') {
             steps {
                 script {
-                    sh '''
-                        dos2unix qemu_start.sh || true  # Исправляем формат
-                        chmod 755 qemu_start.sh
-                        ./qemu_start.sh
-                    '''
+                    sh 'chmod +x qemu_start.sh'
+                    sh 'Xvfb :99 -screen 0 1024x768x24 &'  
+                    sh './qemu_start.sh &'
+                    
+                    def maxAttempts = 33
+                    def waitTime = 3
+                    def attempts = 0
+                    def bmcAvailable = false
+                    
+                    echo "Ожидание доступности OpenBMC..."
+                    
+                    while (attempts < maxAttempts && !bmcAvailable) {
+                        attempts++
+                        try {
+                            def status = sh(
+                                script: 'curl -k -s -o /dev/null -w "%{http_code}" https://localhost:2443/redfish/v1',
+                                returnStdout: true
+                            ).trim()
+                            
+                            if (status == "200") {
+                                bmcAvailable = true
+                                echo "OpenBMC доступен после ${attempts * waitTime} секунд"
+                            } else {
+                                sleep(waitTime)
+                            }
+                        } catch (Exception e) {
+                            sleep(waitTime)
+                        }
+                    }
+                    
+                    if (!bmcAvailable) {
+                        error("OpenBMC не стал доступен после ${maxAttempts * waitTime} секунд ожидания")
+                    }
+                }
+            }
+            post {
+                always {
+                    archiveArtifacts artifacts: 'romulus/*.mtd', allowEmptyArchive: true
                 }
             }
         }
 
+
+        stage('Check OpenBMC Availability') {
+            steps {
+                script {
+                    sh '''
+                    echo "Проверяем доступность OpenBMC..."
+                    if curl -k https://localhost:2443; then
+                        echo "OpenBMC доступен!"
+                    else
+                        echo "Ошибка: OpenBMC не отвечает на localhost:2443"
+                        exit 1
+                    fi
+                    '''
+                }
+            }
+        }
         // Остальные этапы остаются без изменений
         stage('Auth Tests') {
             steps {

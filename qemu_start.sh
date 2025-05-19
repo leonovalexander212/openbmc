@@ -1,5 +1,4 @@
-#!/bin/bash
-
+#!/usr/bin/env bash
 JENKINS_BUILD_URL="https://jenkins.openbmc.org/job/ci-openbmc/lastSuccessfulBuild/distro=ubuntu,label=docker-builder,target=romulus/artifact/openbmc/build/tmp/deploy/images/romulus/*zip*/romulus.zip"
 QEMU_IMAGE_DIR="romulus"
 QEMU_IMAGE_PATTERN="obmc-phosphor-image-romulus-*.static.mtd"
